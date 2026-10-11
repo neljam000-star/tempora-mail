@@ -1,29 +1,74 @@
-'use client';
-import { useEffect, useMemo, useState } from 'react';
+"use client";
 
-type Mail = { id:number; from:string; subject:string; preview:string; time:string; body:string };
-const words = ['cloud','violet','swift','orbit','pixel','river','nova','mint','comet','echo'];
-function makeAddress(){ const part = Math.random().toString(36).slice(2,7)+Math.random().toString(36).slice(2,5); return `${words[Math.floor(Math.random()*words.length)]}.${part}@demo.tempora-mail.test`; }
-const pages: Record<string,{title:string;intro:string;items:string[]}> = {
-  'How It Works': {title:'How Tempora Mail Works',intro:'Get a temporary address in seconds. This deployment is currently in demo mode.',items:['Generate a temporary address using the button on the home page.','Copy the address and use it where you need a disposable email.','When real email infrastructure is connected, incoming messages will appear in the inbox.','The demo does not receive messages from the public internet.']},
-  FAQ:{title:'Frequently Asked Questions',intro:'A few important things to know.',items:['Does it receive real emails? Not yet. Real delivery requires a verified domain and inbound email provider.','Do I need an account? No account is required for this demo.','Is it suitable for private information? No. Temporary inboxes should not be used for sensitive or confidential communications.','Can I extend the timer? The control is a demo interaction until a production backend is configured.']},
-  Privacy:{title:'Privacy Policy',intro:'This is a starter policy and must be reviewed before public production use.',items:['The demo runs in your browser and does not deliver or store real email messages on a backend.','Do not enter confidential information into this demo.','A production version must document its actual logs, providers, data retention, deletion and backup practices.','Contact the site operator with privacy questions once contact details are configured.']},
-  Terms:{title:'Terms of Service',intro:'Demo terms for the starter project.',items:['The demo is provided for evaluation and may not receive real email.','Do not use the service for illegal activity, abuse, spam or account fraud.','Temporary inboxes are not intended for sensitive communications.','Production terms must be reviewed for the operator’s jurisdiction and actual service behavior.']},
-  Contact:{title:'Contact Us',intro:'Contact details can be added here before launch.',items:['For now, configure a support email address in the project before publishing a public production service.','Do not include private credentials or sensitive information in support requests.']}
-};
-export default function Home(){
- const [address,setAddress]=useState(''); const [dark,setDark]=useState(false); const [seconds,setSeconds]=useState(600); const [active,setActive]=useState('Home'); const [notice,setNotice]=useState(''); const [selected,setSelected]=useState<number|null>(null); const [mails,setMails]=useState<Mail[]>([]);
- useEffect(()=>{setAddress(makeAddress());},[]);
- useEffect(()=>{const t=setInterval(()=>setSeconds(s=>Math.max(0,s-1)),1000);return()=>clearInterval(t)},[]);
- const time=useMemo(()=>`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`,[seconds]);
- async function copy(){try{await navigator.clipboard.writeText(address);setNotice('Address copied to clipboard');}catch{setNotice('Copy is unavailable in this browser. Select the address to copy it.');}setTimeout(()=>setNotice(''),2600)}
- function newAddress(){setAddress(makeAddress());setSeconds(600);setMails([]);setSelected(null);setNotice('New demo address created');setTimeout(()=>setNotice(''),2400)}
- function extend(){setSeconds(s=>s+600);setNotice('Demo timer extended by 10 minutes');setTimeout(()=>setNotice(''),2400)}
- return <main className={dark?'app dark':'app'}>
-  <header className="topbar"><button className="brand" onClick={()=>setActive('Home')} aria-label="Tempora Mail home"><span className="logo">✉</span><span><b>Tempora <em>Mail</em></b><small>Fast. Private. Temporary.</small></span></button><nav>{['Home','How It Works','FAQ','Privacy','Terms','Contact'].map(x=><button key={x} className={active===x?'nav active':'nav'} onClick={()=>{setActive(x);setSelected(null)}}>{x}</button>)}</nav><button className="theme" onClick={()=>setDark(!dark)} aria-label="Toggle theme">{dark?'☀️':'🌙'}</button></header>
-  {active==='Home'?<><section className="hero"><div className="heroicon">✉<span>✦</span></div><div className="heroText"><div className="eyebrow"><span className="pulse"/> TEMPORARY EMAIL, SIMPLIFIED</div><h1>Your Temporary<br/><strong>Email Address</strong></h1><p>Get a disposable email address instantly. No registration needed.</p><div className="addressbar"><span className="mailglyph">✉</span><code>{address||'Generating your address…'}</code><button className="copy" onClick={copy}>▢ Copy</button></div><div className="actions"><button className="primary" onClick={newAddress}>⟳ &nbsp;Generate New Email</button><button className="secondary" onClick={()=>{setNotice('Demo inbox refreshed — no real email provider connected');setTimeout(()=>setNotice(''),2800)}}>↻ &nbsp;Refresh Inbox</button><button className="outline" onClick={extend}>＋ &nbsp;Extend 10 min</button></div><div className="expiry">◷ <span>Expires in</span> <b>{time}</b></div><div className="demoNotice"><span>ⓘ</span><div><b>Demo mode</b><small>This address cannot receive real external emails yet. Connect a domain and inbound email provider to enable delivery.</small></div></div></div></section>
-  <section className="inbox"><div className="inboxHead"><div><h2>Inbox <span className="count">{mails.length}</span></h2><p>Your incoming messages will appear here.</p></div><div className="live"><span/> Demo mode</div></div><div className="inboxGrid"><div className="mailList"><div className="listHead"><span>Sender / Subject</span><span>Received</span></div>{mails.length===0?<div className="empty"><div className="emptyIcon">✉</div><b>Your inbox is empty</b><p>Waiting for incoming messages…</p><small>Real email delivery is not configured yet.</small></div>:mails.map(m=><button key={m.id} className={'mailrow '+(selected===m.id?'chosen':'')} onClick={()=>setSelected(m.id)}><span className="avatar">{m.from[0].toUpperCase()}</span><span className="mailMeta"><b>{m.from}</b><strong>{m.subject}</strong><small>{m.preview}</small></span><time>{m.time}</time></button>)}</div><div className="reader">{selected===null?<div className="readerEmpty"><div className="readerIcon">▤</div><b>Select an email to read</b><p>Choose a message from your inbox to view its contents.</p></div>:<div className="readerEmpty"><b>Message</b><p>This demo inbox has no real messages.</p></div>}</div></div><div className="inboxFoot"><span>🔒 Your inbox is private to this browser demo.</span><span>Auto-refresh: <b>On</b></span></div></section></>:<section className="contentPage"><div className="eyebrow">TEMPORA MAIL / {active.toUpperCase()}</div><h1>{pages[active]?.title||active}</h1><p className="pageIntro">{pages[active]?.intro}</p><div className="infoCards">{(pages[active]?.items||[]).map((item,i)=><article className="infoCard" key={item}><span className="step">{String(i+1).padStart(2,'0')}</span><p>{item}</p></article>)}</div><button className="primary" onClick={()=>setActive('Home')}>← Back to Home</button></section>}
-  <footer><div className="footerTop"><div className="footerBrand"><span className="logo">✉</span><div><b>Tempora <em>Mail</em></b><small>Fast. Private. Temporary.</small><p>Disposable email, made simple.<br/>A little more privacy for your everyday browsing.</p></div></div><div><b>Quick Links</b>{['Home','How It Works','FAQ','Privacy','Terms','Contact'].map(x=><button key={x} onClick={()=>setActive(x)}>{x==='Privacy'?'Privacy Policy':x==='Terms'?'Terms of Service':x}</button>)}</div><div className="privacy"><span>♧</span><div><b>Your Privacy Matters</b><p>Temporary inboxes are not suitable for sensitive or confidential communications.</p></div></div></div><div className="footerBottom"><span>© 2026 Tempora Mail. Demo project.</span><span>Fast. Private. Temporary.</span></div></footer>
-  {notice&&<div className="toast">✓ &nbsp;{notice}</div>}
- </main>
+import { useEffect, useMemo, useState } from "react";
+
+type Message = { id: number; from: string; subject: string; preview: string; body: string; time: string };
+
+export default function Home() {
+  const [address, setAddress] = useState("");
+  const [seconds, setSeconds] = useState(600);
+  const [dark, setDark] = useState(false);
+  const [selected, setSelected] = useState<Message | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [notice, setNotice] = useState("Demo mode: real incoming email is not connected yet.");
+
+  const makeAddress = () => {
+    const chars = "abcdefghjkmnpqrstuvwxyz23456789";
+    const name = Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    setAddress(`${name}@your-domain.example`);
+    setSeconds(600);
+    setMessages([]);
+    setSelected(null);
+    setNotice("Demo address created. Configure an owned domain and inbound email provider to receive real mail.");
+  };
+
+  useEffect(() => { makeAddress(); }, []);
+  useEffect(() => {
+    const timer = setInterval(() => setSeconds(s => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const timeLabel = useMemo(() => `${String(Math.floor(seconds / 60)).padStart(2,"0")}:${String(seconds % 60).padStart(2,"0")}`, [seconds]);
+
+  async function copyAddress() {
+    try {
+      await navigator.clipboard.writeText(address);
+      setNotice("Address copied.");
+    } catch {
+      setNotice("Copy isn't available in this browser. Press and hold the address to copy it.");
+    }
+  }
+
+  return (
+    <main className={dark ? "site dark" : "site"}>
+      <header className="topbar">
+        <a className="brand" href="#"><span className="logo">✉</span><span>Tempora <b>Mail</b><small>Fast. Private. Temporary.</small></span></a>
+        <nav><a href="#home">Home</a><a href="#how">How It Works</a><a href="#faq">FAQ</a><a href="#privacy">Privacy</a></nav>
+        <button className="theme" onClick={() => setDark(v => !v)} aria-label="Toggle color theme">{dark ? "☀️" : "🌙"}</button>
+      </header>
+
+      <section className="hero" id="home">
+        <div className="hero-copy"><div className="eyebrow">INSTANT · NO SIGN-UP</div><h1>Your Temporary<br/><span>Email Address</span></h1><p>Get a disposable email address for quick, low-risk sign-ups. No account required.</p></div>
+        <div className="mail-art" aria-hidden="true">✉</div>
+      </section>
+
+      <section className="address-card">
+        <label htmlFor="address">Your temporary email address</label>
+        <div className="address-row"><input id="address" value={address} readOnly onFocus={e => e.currentTarget.select()} /><button onClick={copyAddress}>Copy</button></div>
+        <div className="actions"><button className="primary" onClick={makeAddress}>＋ Generate New Email</button><button onClick={() => setNotice("Inbox refreshed. This demo has no live email provider connected.")}>↻ Refresh Inbox</button></div>
+        <div className="timer">◷ Expires in <strong>{timeLabel}</strong></div>
+        <p className="notice" role="status">{notice}</p>
+      </section>
+
+      <section className="inbox">
+        <div className="section-head"><div><h2>Inbox</h2><p>Messages delivered to this address will appear here once email infrastructure is connected.</p></div><span className="pill">DEMO MODE</span></div>
+        {selected ? <article className="message-detail"><button className="back" onClick={() => setSelected(null)}>← Back to inbox</button><h3>{selected.subject}</h3><p>From: {selected.from}</p><p>{selected.body}</p></article> :
+          messages.length ? <div className="message-list">{messages.map(m => <button className="message" key={m.id} onClick={() => setSelected(m)}><b>{m.from}</b><strong>{m.subject}</strong><span>{m.preview}</span><small>{m.time}</small></button>)}</div> :
+          <div className="empty"><div className="empty-icon">↙</div><h3>Your inbox is empty</h3><p>No messages yet. Real message receiving will work after you connect an inbound email provider.</p></div>}
+      </section>
+
+      <section className="info-grid" id="how"><article><h3>How it works</h3><p>Generate an address, copy it, and check the inbox. This deployment currently provides the interface only.</p></article><article id="faq"><h3>Frequently asked questions</h3><p><b>Can it receive real emails?</b><br/>Not yet. You must configure a domain, MX records, an inbound email service, and a secure backend.</p></article><article id="privacy"><h3>Privacy & safety</h3><p>Do not use temporary inboxes for passwords, financial accounts, or confidential communications. This demo stores no received messages.</p></article></section>
+      <footer>© 2026 Tempora Mail · Demo mode — real email delivery not configured.</footer>
+    </main>
+  );
 }
